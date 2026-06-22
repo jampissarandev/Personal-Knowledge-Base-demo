@@ -43,18 +43,23 @@ export interface UpdateNoteRequest {
 /**
  * Query string for `listNotes`. `folderId === null` filters to unfiled
  * notes; `folderId === undefined` omits the filter (returns all folders).
- * Same semantics for the backend `[FromQuery] Guid?` parameter.
+ * Uses `unfiled=true` query param for unfiled notes so the backend can
+ * distinguish "no filter" from "filter by FolderId == null".
  */
 export interface NotesFilter {
   folderId?: string | null;
   tagId?: string;
   isPinned?: boolean;
   limit?: number;
+  /** Set to true to filter notes with no folder (unfiled). */
+  unfiled?: boolean;
 }
 
 function toQueryString(filter: NotesFilter): string {
   const params = new URLSearchParams();
-  if (filter.folderId !== undefined) {
+  if (filter.unfiled) {
+    params.set('unfiled', 'true');
+  } else if (filter.folderId !== undefined) {
     params.set('folderId', filter.folderId === null ? '' : filter.folderId);
   }
   if (filter.tagId !== undefined) {

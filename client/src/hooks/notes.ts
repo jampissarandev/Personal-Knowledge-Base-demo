@@ -39,7 +39,7 @@ export function useNotes(
   const stableFilter = useMemo<notesApi.NotesFilter>(
     () => ({ ...filter }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [filter.folderId, filter.tagId, filter.isPinned, filter.limit],
+    [filter.folderId, filter.tagId, filter.isPinned, filter.limit, filter.unfiled],
   );
   return useQuery<notesApi.NoteResponse[], ApiError>({
     queryKey: ['notes', stableFilter],

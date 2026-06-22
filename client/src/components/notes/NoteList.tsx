@@ -18,8 +18,7 @@ import { NoteListEmpty } from './NoteListEmpty';
 import { NoteListError } from './NoteListError';
 import { forwardSearchParam } from '@/lib/nextPath';
 
-const PINNED_CAP = 6;
-const RECENT_CAP = 20;
+
 
 export function NoteList() {
   const navigate = useNavigate();
@@ -28,12 +27,18 @@ export function NoteList() {
 
   const folderId = searchParams.get('folderId');
   const tagId = searchParams.get('tagId');
-  const hasFilter = folderId !== null || tagId !== null;
+  const unfiled = searchParams.get('unfiled');
+  const hasFilter = folderId !== null || tagId !== null || unfiled !== null;
 
-  // Build the active filter object for the backend query. We pass
-  // `null` (not `undefined`) for folderId when the user picked the
-  // "Unfiled" pseudo-folder, and `undefined` when no filter is set.
+  // Build the active filter object for the backend query.
+  // - `unfiled=true` → notes with no folder (FolderId == null)
+  // - `folderId=<guid>` → notes in that folder
+  // - `tagId=<guid>` → notes with that tag
+  // When no filter is set we pass `{}` (all notes).
   const filter = useMemo(() => {
+    if (unfiled !== null) {
+      return tagId !== null ? { unfiled: true, tagId } : { unfiled: true };
+    }
     if (folderId !== null) {
       return tagId !== null
         ? { folderId, tagId }
@@ -43,16 +48,19 @@ export function NoteList() {
       return { tagId };
     }
     return {};
-  }, [folderId, tagId]);
+  }, [folderId, tagId, unfiled]);
 
   const query = useNotes(hasFilter ? filter : {});
 
   // When no filter, also fetch the pinned list (separate query key).
   const pinnedQuery = useNotes(
-    hasFilter ? { isPinned: true } : { isPinned: true, limit: PINNED_CAP },
+    hasFilter ? { isPinned: true } : { isPinned: true },
   );
 
   const filterChipLabel = useMemo(() => {
+    if (unfiled !== null) {
+      return { key: 'unfiled', label: 'Unfiled' };
+    }
     if (folderId !== null) {
       const f = folders.find((x) => x.id === folderId);
       return { key: 'folderId', label: f ? `In: ${f.name}` : 'In: Unknown' };
@@ -61,7 +69,7 @@ export function NoteList() {
       return { key: 'tagId', label: `Tagged` };
     }
     return null;
-  }, [folderId, tagId, folders]);
+  }, [folderId, tagId, unfiled, folders]);
 
   const clearFilter = () => {
     if (!filterChipLabel) return;
@@ -85,6 +93,7 @@ export function NoteList() {
   const pinned = hasFilter
     ? notes.filter((n) => n.isPinned)
     : (pinnedQuery.data ?? []);
+  const unpinned = hasFilter ? notes : notes.filter((n) => !n.isPinned);
 
   if (!hasFilter && notes.length === 0) {
     return <NoteListEmpty />;
@@ -112,8 +121,6 @@ export function NoteList() {
       </div>
     );
   }
-
-  const recent = hasFilter ? notes : notes.slice(0, RECENT_CAP);
 
   return (
     <div className="flex h-full flex-col">
@@ -172,10 +179,10 @@ export function NoteList() {
             )}
             <section>
               <h2 className="px-2 py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Recent
+                All notes ({notes.length})
               </h2>
               <div className="space-y-1">
-                {recent.map((n) => (
+                {unpinned.map((n) => (
                   <NoteCard key={n.id} note={n} />
                 ))}
               </div>

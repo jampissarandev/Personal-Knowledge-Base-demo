@@ -8,6 +8,8 @@ public interface INoteService
     /// <summary>
     /// Lists notes owned by the user with optional AND-combined filters.
     /// Ordered by <c>IsPinned DESC, UpdatedAt DESC</c>.
+    /// When <paramref name="unfiled"/> is true, filters to notes with no folder
+    /// (<c>FolderId == null</c>). Mutually exclusive with <paramref name="folderId"/>.
     /// </summary>
     Task<IReadOnlyList<NoteResponse>> ListAsync(
         Guid userId,
@@ -15,6 +17,7 @@ public interface INoteService
         Guid? tagId,
         bool? isPinned,
         int? limit,
+        bool? unfiled,
         CancellationToken ct);
 
     /// <summary>

@@ -25,13 +25,18 @@ public class NoteService : INoteService
         Guid? tagId,
         bool? isPinned,
         int? limit,
+        bool? unfiled,
         CancellationToken ct)
     {
         var query = _context.Notes
             .AsNoTracking()
             .Where(n => n.UserId == userId);
 
-        if (folderId.HasValue)
+        if (unfiled.HasValue && unfiled.Value)
+        {
+            query = query.Where(n => n.FolderId == null);
+        }
+        else if (folderId.HasValue)
         {
             query = query.Where(n => n.FolderId == folderId.Value);
         }

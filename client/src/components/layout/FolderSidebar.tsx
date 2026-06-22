@@ -82,6 +82,10 @@ function setOnly(sp: URLSearchParams, key: string, value: string | null) {
   } else {
     next.set(key, value);
   }
+  // Switching to a specific folder or tag clears the unfiled pseudo-filter.
+  if (key === 'folderId' || key === 'tagId') {
+    next.delete('unfiled');
+  }
   if (key === 'folderId') next.delete('tagId');
   if (key === 'tagId') next.delete('folderId');
   return next;
@@ -97,13 +101,14 @@ export function FolderSidebar() {
   // 200; for a personal notes app this is fine. The badge isn't worth
   // a per-folder round-trip.
   const allNotes = useNotes({});
-  const unfiledNotes = useNotes({ folderId: null });
+  const unfiledNotes = useNotes({ unfiled: true });
 
   const allCount = allNotes.data?.length ?? 0;
   const unfiledCount = unfiledNotes.data?.length ?? 0;
 
   const folderId = searchParams.get('folderId');
   const tagId = searchParams.get('tagId');
+  const unfiled = searchParams.get('unfiled');
 
   const [newOpen, setNewOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -112,23 +117,28 @@ export function FolderSidebar() {
     const next = new URLSearchParams(searchParams);
     next.delete('folderId');
     next.delete('tagId');
+    next.delete('unfiled');
     return next;
   }, [searchParams]);
 
   return (
     <nav className="flex h-full flex-col gap-1 p-2 text-sm" aria-label="Folders and tags">
       <Row
-        active={folderId === null && tagId === null}
+        active={folderId === null && tagId === null && unfiled === null}
         onClick={() => setSearchParams(clearAll, { replace: true })}
         icon={<FileText className="h-4 w-4" />}
         label="All notes"
         count={allCount}
       />
       <Row
-        active={folderId !== null && tagId === null && folderId === ''}
-        onClick={() =>
-          setSearchParams(setOnly(searchParams, 'folderId', null), { replace: true })
-        }
+        active={unfiled !== null && tagId === null}
+        onClick={() => {
+          const next = new URLSearchParams(searchParams);
+          next.delete('folderId');
+          next.delete('tagId');
+          next.set('unfiled', 'true');
+          setSearchParams(next, { replace: true });
+        }}
         icon={<FolderOpen className="h-4 w-4" />}
         label="Unfiled"
         count={unfiledCount}

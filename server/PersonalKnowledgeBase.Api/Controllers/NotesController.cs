@@ -29,6 +29,7 @@ public class NotesController : ControllerBase
         [FromQuery] Guid? tagId,
         [FromQuery] bool? isPinned,
         [FromQuery] int? limit,
+        [FromQuery] bool? unfiled,
         CancellationToken ct)
     {
         var userId = CurrentUserId;
@@ -38,7 +39,7 @@ public class NotesController : ControllerBase
         }
 
         var clampedLimit = limit.HasValue ? Math.Clamp(limit.Value, 1, 200) : (int?)null;
-        var notes = await _noteService.ListAsync(userId.Value, folderId, tagId, isPinned, clampedLimit, ct);
+        var notes = await _noteService.ListAsync(userId.Value, folderId, tagId, isPinned, clampedLimit, unfiled, ct);
         return Ok(notes);
     }
 
