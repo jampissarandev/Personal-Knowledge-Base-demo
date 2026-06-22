@@ -288,6 +288,7 @@ export function NoteEditorPage({ mode }: { mode: 'create' | 'edit' }): React.Rea
             <div className="overflow-hidden rounded-md border">
               <EditorToolbar editor={editorRef.current} />
               <RichTextEditor
+                key={mode === 'edit' ? `edit-${id}-${hydrated}` : 'create'}
                 editable={!isSubmitting}
                 initialContent={form.watch('contentJson') || EMPTY_DOC}
                 onChange={(json) => {

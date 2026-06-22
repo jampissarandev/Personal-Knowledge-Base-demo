@@ -40,3 +40,4 @@ desktop.ini
 
 ## Playwright CLI cache (local browser session logs / page snapshots)
 .playwright-cli/
+.playwright-mcp/
